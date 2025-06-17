@@ -4,24 +4,31 @@
 #include <set>
 #include <sstream>
 #include <algorithm>
-#include <cctype>     // for toupper
-#include <windows.h>  // for system("cls") on Windows
+#include <cctype>
+#include <windows.h>
 
 using namespace std;
 
-
+// 清屏函数
 void clearScreen() {
-    system("cls");  // Windows ϵͳ
+    system("cls");
 }
 
-// �������ݽṹ
+// 居中显示文字
+void centerText(const string& text, int width = 80) {
+    int padding = (width - text.length()) / 2;
+    if (padding > 0) cout << string(padding, ' ');
+    cout << text << endl;
+}
+
+// 题目结构
 struct Question {
     string questionText;
     set<char> correctAnswers;
     string explanation;
 };
 
-// ��������
+// 解析答案
 set<char> parseAnswers(const string& answerLine) {
     set<char> correctAnswers;
     size_t pos = answerLine.find("Answer:");
@@ -30,8 +37,7 @@ set<char> parseAnswers(const string& answerLine) {
         stringstream ss(answerPart);
         string token;
         while (getline(ss, token, ',')) {
-            for (size_t i = 0; i < token.size(); ++i) {
-                char c = token[i];
+            for (char c : token) {
                 if (isalpha(c)) {
                     correctAnswers.insert(toupper(c));
                 }
@@ -41,7 +47,7 @@ set<char> parseAnswers(const string& answerLine) {
     return correctAnswers;
 }
 
-// ����������
+// 解析解释
 string parseExplanation(const string& line) {
     size_t pos = line.find("Explanation:");
     if (pos != string::npos) {
@@ -50,24 +56,48 @@ string parseExplanation(const string& line) {
     return "";
 }
 
-// ��ȡ�û���
-set<char> getUserAnswers() {
-    string input;
-    cout << "Your answer (A/B/C/D or multiple like A,C): ";
-    cin >> input;
-    cin.ignore(); // ������뻺����
-
-    set<char> userAnswers;
-    for (size_t i = 0; i < input.size(); ++i) {
-        char c = input[i];
+// 检查是否有效答案（只允许 A-D）
+bool isValidAnswer(const string& input) {
+    for (char c : input) {
         if (isalpha(c)) {
-            userAnswers.insert(toupper(c));
+            char upper = toupper(c);
+            if (upper < 'A' || upper > 'D') {
+                return false;
+            }
         }
     }
+    return true;
+}
+
+// 获取用户输入答案
+set<char> getUserAnswers() {
+    string input;
+    set<char> userAnswers;
+
+    while (true) {
+        cout << "\nYour answer (A/B/C/D or multiple like A,C): ";
+        getline(cin, input);
+        userAnswers.clear();
+
+        if (!isValidAnswer(input)) {
+            cout << "Invalid input. Please enter only A, B, C, or D.\n";
+            continue;
+        }
+
+        for (char c : input) {
+            if (isalpha(c)) {
+                userAnswers.insert(toupper(c));
+            }
+        }
+
+        if (!userAnswers.empty()) break;
+        cout << "Please enter at least one valid option.\n";
+    }
+
     return userAnswers;
 }
 
-// ��ȡ�û�����
+// 用户反馈
 string getUserFeedback() {
     string feedback;
     cout << "\nPlease share your feedback about this quiz:\n";
@@ -75,16 +105,16 @@ string getUserFeedback() {
     return feedback;
 }
 
-// ��ȡ��������
+// 评分文字
 string getReview(int score) {
     if (score <= 3) return "Needs Improvement";
     else if (score <= 7) return "Good Job!";
-    else return "Excellent! You��re a Smart City Transport Champion!";
+    else return "Excellent! You are a Smart City Transport Champion!";
 }
 
-// �����û�����
+// 保存成绩
 void saveUserData(const string& name, int score, const string& review, const string& feedback) {
-    ofstream file("user.txt", ios::app); // ׷��ģʽ
+    ofstream file("user.txt", ios::app);
     if (file.is_open()) {
         file << "Name: " << name << "\n";
         file << "Score: " << score << "/15\n";
@@ -92,142 +122,122 @@ void saveUserData(const string& name, int score, const string& review, const str
         file << "Feedback: " << feedback << "\n";
         file << "------------------------\n";
         file.close();
-        cout << "Your data has been saved successfully.\n";
+        cout << "\nYour data has been saved successfully.\n";
     } else {
-        cerr << "Unable to save user data.\n";
+        cerr << "Error: Unable to save user data.\n";
     }
 }
 
-// ����ϵͳ��
-class EcoTransportQuizSystem {
-public:
-    // ���캯�� - ��ʾ���ض���
-    EcoTransportQuizSystem() {
-        system("COLOR 0e");
-        system("cls");
+// 欢迎动画
+void showIntro() {
+    system("COLOR 0E");
+    clearScreen();
+    SetConsoleCP(437);
+    SetConsoleOutputCP(437);
 
-        SetConsoleCP(437);
-        SetConsoleOutputCP(437);
+    int bar1 = 219;
+    centerText("Welcome to Eco-Friendly Transportation Quiz");
+    centerText("Loading, please wait...\n");
 
-        int bar1 = 219;
+    cout << "\t\t\t";
 
-        cout << "\n\n\n\t\t\t\tWelcome to Eco-Friendly Transportation Quiz :)";
-        cout << "\n\n\n\t\t\t\t";
-
-        cout << "\r\t\t\t\t";
-
-        for (int i = 0; i <= 100; i += 4) {
-            cout << " " << i << "%";
-            cout << flush;
-            Sleep(15);
-            cout << "\r\t\t\t\t";
-            for (int j = 0; j < i / 4; j++) {
-                cout << (char)bar1;
-            }
+    for (int i = 0; i <= 100; i += 4) {
+        cout << " " << i << "%";
+        cout << flush;
+        Sleep(10);
+        cout << "\r\t\t\t";
+        for (int j = 0; j < i / 4; j++) {
+            cout << (char)bar1;
         }
-        cout << "\n\t\t\t\t" << (char)1 << "!";
-        cout << endl;
-        system("pause");
-        system("cls");
+        Sleep(10);
     }
 
-    // ��������
-    ~EcoTransportQuizSystem() {
-        cout << "Thank you for using our Eco-Friendly Transportation Quiz. Goodbye!\n";
-    }
-};
+    cout << "\n";
+    system("pause");
+    clearScreen();
+}
 
+// 主函数
 int main() {
-    // ��ʼ������ϵͳ
-    EcoTransportQuizSystem quizSystem;
+    showIntro();
+    clearScreen();
 
-    // �������ļ�
     ifstream file("question.txt");
-    if (!file) {
-        cout << "Error: Could not open question.txt file." << endl;
+    if (!file.is_open()) {
+        cout << "Error: Could not open question.txt file.\n";
         return 1;
     }
 
     string userName;
+    centerText("===== Green City, Smart Living Quiz =====");
+    centerText("Topic: Eco-Friendly Transportation in Smart Cities\n");
+    cout << "\nEnter your name: ";
+    getline(cin, userName);
+
+    clearScreen();
+    centerText("Hi " + userName + "! You will be asked 15 multiple-choice questions.");
+    centerText("Each correct answer gives you 1 point.\n");
+    system("pause");
+    clearScreen();
+
+    string line;
     int correctCount = 0;
     int totalQuestions = 0;
 
-    // ��ȡ�û�����
-    clearScreen();
-    cout << "===== Welcome to the Green City, Smart Living Quiz! =====" << endl;
-    cout << "Topic: Eco-Friendly Transportation in Smart Cities" << endl;
-    cout << "Please enter your name: ";
-    getline(cin, userName);
-
-    // ��ʾ����˵��
-    clearScreen();
-    cout << "\nHi " << userName << "! You will be asked 15 multiple-choice questions." << endl;
-    cout << "Each correct answer gives you 1 point. Select all correct options for multiple-answer questions.\n\nLet's begin!\n\n";
-
-    // ��ȡ�����ļ�
-    string line;
     while (getline(file, line)) {
-        Question currentQuestion;
-        currentQuestion.questionText = "";
+        Question q;
+        q.questionText = "";
 
-        // ��ȡ�����ı�
         while (line.find("Answer:") == string::npos && !file.eof()) {
-            currentQuestion.questionText += line + "\n";
+            q.questionText += line + "\n";
             getline(file, line);
         }
 
-        // ������ȷ��
-        currentQuestion.correctAnswers = parseAnswers(line);
+        q.correctAnswers = parseAnswers(line);
 
-        // ��ȡ����
         if (getline(file, line)) {
-            currentQuestion.explanation = parseExplanation(line);
+            q.explanation = parseExplanation(line);
         }
 
-        // ��ʾ����
+        clearScreen(); // ✅ 每题清屏
+
         totalQuestions++;
-        cout << "===== Question " << totalQuestions << " =====" << endl;
-        cout << currentQuestion.questionText << endl;
+        centerText("===== Question " + to_string(totalQuestions) + " =====");
+        cout << q.questionText << endl;
 
-        // ��ȡ�û���
         set<char> userAnswers = getUserAnswers();
+        cout << "\n";
 
-        // ����
-        if (userAnswers == currentQuestion.correctAnswers) {
-            cout << "Correct!\n\n";
+        if (userAnswers == q.correctAnswers) {
+            centerText("Correct!\n");
             correctCount++;
         } else {
-            cout << "Wrong! The correct answer was: ";
-            set<char>::iterator it;
-            for (it = currentQuestion.correctAnswers.begin(); it != currentQuestion.correctAnswers.end(); ++it) {
-                cout << *it << " ";
+            centerText("Wrong! Correct answer: ");
+            for (char ans : q.correctAnswers) {
+                cout << ans << " ";
             }
-            cout << "\n\n";
+            cout << "\n";
 
-            // ��ʾ����
-            if (!currentQuestion.explanation.empty()) {
-                cout << "Explanation:\n" << currentQuestion.explanation << "\n\n";
+            if (!q.explanation.empty()) {
+                cout << "\nExplanation:\n" << q.explanation << "\n";
             }
         }
+
+        system("pause");
     }
 
     file.close();
+    clearScreen();
 
-    // �������ֺ�����
     string review = getReview(correctCount);
-
-    // ��ȡ�û�����
     string feedback = getUserFeedback();
-
-    // �����û�����
     saveUserData(userName, correctCount, review, feedback);
 
-    // ��ʾ���
     clearScreen();
-    cout << "===== Quiz Complete! =====" << endl;
-    cout << userName << ", you scored " << correctCount << " out of " << totalQuestions << "." << endl;
-    cout << "Review: " << review << endl;
+    centerText("===== Quiz Completed! =====");
+    cout << userName << ", you scored " << correctCount << " out of " << totalQuestions << ".\n";
+    cout << "Review: " << review << "\n";
 
-    system("pause"); // ���ִ��ڴ�
+    system("pause");
     return 0;
 }
