@@ -128,8 +128,6 @@ void saveUserData(const string& name, int score, const string& review, const str
     }
 }
 
-
-
 // 欢迎动画
 void showIntro() {
     system("COLOR 0E");
@@ -211,19 +209,22 @@ int main() {
         cout << "\n";
 
         if (userAnswers == q.correctAnswers) {
-            centerText("Correct!\n");
-            correctCount++;
-        } else {
-            centerText("Wrong! Correct answer: ");
-            for (char ans : q.correctAnswers) {
-                cout << ans << " ";
-            }
-            cout << "\n";
+		    centerText("Correct!\n");
+		    correctCount++;
+		} else {
+		    string correctAnsText = "Wrong! Correct answer: ";
+		    for (char ans : q.correctAnswers) {
+		        correctAnsText += ans;
+		        correctAnsText += ' ';
+		    }
+		    centerText(correctAnsText);
+		    cout << "\n";
+		
+		    if (!q.explanation.empty()) {
+		        cout << "\nExplanation:\n" << q.explanation << "\n";
+		    }
+		}
 
-            if (!q.explanation.empty()) {
-                cout << "\nExplanation:\n" << q.explanation << "\n";
-            }
-        }
 
         system("pause");
     }
